@@ -1,0 +1,76 @@
+name: PSE Daily Screener
+
+on:
+  # 11:00 AM IST = 05:30 UTC, weekdays only (Mon-Fri)
+  schedule:
+    - cron: "30 5 * * 1-5"
+
+  # Manual trigger from Actions tab
+  workflow_dispatch:
+    inputs:
+      full_scan:
+        description: "Full scan — re-scan all New Candidates from job creation date"
+        required: false
+        default: "false"
+        type: boolean
+
+jobs:
+  screen:
+    name: Screen New Candidates
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies (pdftotext)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --fix-missing poppler-utils
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          # No pip cache — avoids failure when requirements.txt is absent
+
+      - name: Install Python dependencies
+        run: pip install requests
+
+      # Persists pse_state.json between runs
+      # Tracks last_run timestamp + seen candidate IDs so we never re-scan
+      - name: Restore PSE screener state
+        uses: actions/cache@v4
+        with:
+          path: pse_state.json
+          key: pse-screener-state-${{ github.run_id }}
+          restore-keys: pse-screener-state-
+
+      - name: Run PSE screener
+        env:
+          MANATAL_API_KEY:   ${{ secrets.MANATAL_API_KEY }}
+          SLACK_BOT_TOKEN:   ${{ secrets.SLACK_BOT_TOKEN }}
+          PSE_SLACK_CHANNEL: ${{ secrets.PSE_SLACK_CHANNEL }}
+        run: |
+          if [ "${{ github.event.inputs.full_scan }}" = "true" ]; then
+            python scripts/pse_screener.py --full-scan
+          else
+            python scripts/pse_screener.py
+          fi
+
+      - name: Save PSE screener state
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: pse_state.json
+          key: pse-screener-state-${{ github.run_id }}
+
+      - name: Upload CSV report as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pse-results-${{ github.run_id }}
+          path: pse_reports/*.csv
+          if-no-files-found: ignore
+          retention-days: 7
