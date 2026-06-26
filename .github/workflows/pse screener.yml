@@ -50,7 +50,7 @@ jobs:
       - name: Run PSE screener
         env:
           MANATAL_API_KEY:   ${{ secrets.MANATAL_API_KEY }}
-          SLACK_BOT_TOKEN:   ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
           PSE_SLACK_CHANNEL: ${{ secrets.PSE_SLACK_CHANNEL }}
         run: |
           if [ "${{ github.event.inputs.full_scan }}" = "true" ]; then
