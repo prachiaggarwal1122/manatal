@@ -734,7 +734,10 @@ def check_valid_education(edus: list, blob: str) -> bool:
 
 def check_min_tenure(exps: list) -> bool:
     """Returns True if at least one non-internship job lasted >= 11 months.
-    11 months grace period — strict 12 penalises Nov-Oct roles unfairly."""
+    11 months grace period — strict 12 penalises Nov-Oct roles unfairly.
+    If no experience entries exist at all, pass — Manatal may not have pulled them yet."""
+    if not exps:
+        return True  # no data — benefit of the doubt
     for e in exps:
         pos = (e.get("position") or "").lower()
         if _has_any(pos, INTERN_ROLE_KEYWORDS):
@@ -1164,6 +1167,14 @@ def score_candidate(candidate: dict, exps: list, edus: list, resume: str) -> dic
     elif ctc_lpa is not None and ctc_ok:
         strengths.append(ctc_note)
     # Job gap excluded from display
+
+    # Catch-all: if ineligible but no specific gap message was recorded,
+    # surface the real reason rather than showing "none"
+    if not eligible and not gaps:
+        if not has_ext_support:
+            gaps.append("Insufficient external customer support evidence in profile")
+        else:
+            gaps.append("Profile does not meet one or more eligibility criteria")
 
     # ── NARRATIVE ─────────────────────────────────────────────────────────
     why_match, why_reject = "", ""
