@@ -1519,7 +1519,15 @@ def run(full_scan: bool = False):
     print(f"  {len(matches)} in New Candidates stage · {len(new)} not yet scanned")
 
     if not new:
-        print("Nothing new today. Exiting.")
+        print("Nothing new today. Posting to Slack and exiting.")
+        run_date = datetime.datetime.now().strftime("%d %b %Y")
+        post_slack(
+            blocks=[
+                {"type": "header", "text": {"type": "plain_text", "text": f"PSE Screener — {run_date}"}},
+                {"type": "section", "text": {"type": "mrkdwn", "text": "📭 No new candidates today."}},
+            ],
+            text=f"PSE Screener {run_date} — No new candidates today."
+        )
         state["last_run"] = datetime.datetime.utcnow().isoformat() + "Z"
         save_state(state)
         return
