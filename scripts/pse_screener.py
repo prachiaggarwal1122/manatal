@@ -20,7 +20,7 @@ from pathlib import Path
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-MANATAL_API_KEY   = os.environ["MANATAL_API_KEY"]   # saved as MANATAL_API_KEY in GitHub secrets
+MANATAL_API_KEY   = os.environ["MANATAL_API_KEY"]   # saved as MANATAL_API_KEY in GitHub secrets 
 SLACK_BOT_TOKEN   = os.environ["SLACK_BOT_TOKEN"]
 PSE_SLACK_CHANNEL = os.environ["PSE_SLACK_CHANNEL"]
 
